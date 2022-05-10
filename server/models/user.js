@@ -46,4 +46,5 @@ class Users extends Model {
   }
 }
 
+
 module.exports = new Users();

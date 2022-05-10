@@ -86,12 +86,43 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/signup', (req, res, next) =>{
-  console.log('this req.body from post at signup:', req.body);
-
+  // var username = req.body.username;
+  models.Users.get({username: req.body.username})
+    .then(user => {
+      if (user) {
+        console.log('Username exists!!', user);
+        res.redirect('/signup');
+      } else {
+        console.log('User created!!', user);
+        models.Users.create(req.body)
+          .then(data => {
+            res.redirect('/');
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      }
+    });
 });
 
 app.post('/login', (req, res, next) => {
   console.log('this is login req.body', req.body);
+  models.Users.get({username: req.body.username})
+    .then(user => {
+      console.log(user);
+      if (!user) {
+        console.log('this user is not signed up yet!');
+        res.redirect('/login');
+      } else {
+        if (models.Users.compare(req.body.password, user.password, user.salt)) {
+          console.log('successfully logged in');
+          res.redirect('/');
+        } else {
+          console.log('wrong password');
+          res.redirect('/login');
+        }
+      }
+    });
 });
 
 
