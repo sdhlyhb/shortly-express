@@ -1,18 +1,36 @@
 const models = require('../models');
 const Promise = require('bluebird');
 
+var sessionCreator = function() {
+  return new Promise((resolve, reject) => {
+    models.Sessions.create()
+      .then(data => {
+        return models.Sessions.get({id: data.insertId});
+      })
+      .then(session => {
+        // console.log('this is the session:', session);
+        // req.session = session;
+        // res.cookie('shortlyid', session.hash);
+        resolve(session);
+      });
+  });
+};
+
 module.exports.createSession = (req, res, next) => {
   //console.log(req);
   if (req.cookies && req.cookies.shortlyid) {
     models.Sessions.get({hash: req.cookies.shortlyid})
       .then(session => {
         req.session = session;
+        //console.log('*************REQ', req.session);
         next();
       })
       .catch(() => {
-        // eslint-disable-next-line no-use-before-define
         sessionCreator(req, res)
-          .then(() => {
+          .then((session) => {
+            //console.log('*************REQ', req.session);
+            req.session = session;
+            res.cookie('shortlyid', session.hash);
             next();
           })
           .catch(err => {
@@ -21,9 +39,11 @@ module.exports.createSession = (req, res, next) => {
       });
 
   } else {
-    // eslint-disable-next-line no-use-before-define
-    sessionCreator(req, res)
-      .then(() => {
+    sessionCreator()
+      .then((session) => {
+        //console.log('*************REQ', req.session);
+        req.session = session;
+        res.cookie('shortlyid', session.hash);
         next();
       })
       .catch(err => {
@@ -36,15 +56,7 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-var sessionCreator = function(req, res) {
-  return models.Sessions.create()
-    .then(data => {
-      return models.Sessions.get({id: data.insertId});
-    })
-    .then(session => {
-      console.log(session);
-      req.session = session;
-      res.cookie('shortlyid', session.hash);
-    });
+module.exports.verifySession = function(session) {
+  return models.Sessions.isLoggedIn(session);
 };
 
