@@ -3,6 +3,7 @@ const path = require('path');
 const utils = require('./lib/hashUtils');
 const partials = require('express-partials');
 const Auth = require('./middleware/auth');
+const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
 const morgan = require('morgan');
 
@@ -11,6 +12,8 @@ const app = express();
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'ejs');
 app.use(morgan('tiny'));
+app.use(cookieParser);
+app.use(Auth.createSession);
 app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

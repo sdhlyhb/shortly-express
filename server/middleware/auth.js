@@ -11,7 +11,7 @@ module.exports.createSession = (req, res, next) => {
       })
       .catch(() => {
         // eslint-disable-next-line no-use-before-define
-        createSession(req, res)
+        sessionCreator(req, res)
           .then(() => {
             next();
           })
@@ -22,7 +22,7 @@ module.exports.createSession = (req, res, next) => {
 
   } else {
     // eslint-disable-next-line no-use-before-define
-    createSession(req, res)
+    sessionCreator(req, res)
       .then(() => {
         next();
       })
@@ -36,7 +36,7 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-var createSession = function(req, res) {
+var sessionCreator = function(req, res) {
   return models.Sessions.create()
     .then(data => {
       return models.Sessions.get({id: data.insertId});
