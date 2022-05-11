@@ -100,6 +100,7 @@ app.post('/signup', (req, res, next) =>{
           })
           .catch(err => {
             console.error(err);
+            res.redirect('/signup');
           });
       }
     });
