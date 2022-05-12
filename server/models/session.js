@@ -55,6 +55,14 @@ class Sessions extends Model {
     let hash = utils.createHash(data);
     return super.create.call(this, { hash });
   }
+
+  update(options, values) {
+    return super.update.call(this, options, values);
+  }
+
+  delete(options) {
+    return super.delete.call(this, options);
+  }
 }
 
 module.exports = new Sessions();

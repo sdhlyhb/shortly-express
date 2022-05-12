@@ -23,66 +23,90 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/',
   (req, res) => {
-    res.render('index');
+    if (Auth.verifySession(req.session)) {
+      res.render('index');
+    } else {
+      res.redirect('/login');
+    }
+
   });
 
 app.get('/create',
   (req, res) => {
-    res.render('index');
+    if (Auth.verifySession(req.session)) {
+      res.render('index');
+    } else {
+      res.redirect('/login');
+    }
   });
 
 app.get('/links',
   (req, res, next) => {
-    models.Links.getAll()
-      .then(links => {
-        res.status(200).send(links);
-      })
-      .error(error => {
-        res.status(500).send(error);
-      });
-  });
-
-app.post('/links',
-  (req, res, next) => {
-    console.log('this is req.session:', req.session);
     if (Auth.verifySession(req.session)) {
-
-      var url = req.body.url;
-      if (!models.Links.isValidUrl(url)) {
-      // send back a 404 if link is not valid
-        return res.sendStatus(404);
-      }
-
-      return models.Links.get({ url })
-        .then(link => {
-          if (link) {
-            throw link;
-          }
-          return models.Links.getUrlTitle(url);
-        })
-        .then(title => {
-          return models.Links.create({
-            url: url,
-            title: title,
-            baseUrl: req.headers.origin
-          });
-        })
-        .then(results => {
-          return models.Links.get({ id: results.insertId });
-        })
-        .then(link => {
-          throw link;
+      models.Links.getAll()
+        .then(links => {
+          res.status(200).send(links);
         })
         .error(error => {
           res.status(500).send(error);
-        })
-        .catch(link => {
-          res.status(200).send(link);
         });
     } else {
       res.redirect('/login');
     }
   });
+
+app.post('/links',
+  (req, res, next) => {
+    console.log('this is req.session:', req.session);
+    var url = req.body.url;
+    if (!models.Links.isValidUrl(url)) {
+    // send back a 404 if link is not valid
+      return res.sendStatus(404);
+    }
+
+    return models.Links.get({ url })
+      .then(link => {
+        if (link) {
+          throw link;
+        }
+        return models.Links.getUrlTitle(url);
+      })
+      .then(title => {
+        return models.Links.create({
+          url: url,
+          title: title,
+          baseUrl: req.headers.origin
+        });
+      })
+      .then(results => {
+        return models.Links.get({ id: results.insertId });
+      })
+      .then(link => {
+        throw link;
+      })
+      .error(error => {
+        res.status(500).send(error);
+      })
+      .catch(link => {
+        res.status(200).send(link);
+      });
+    res.redirect('/login');
+  });
+
+app.get('/logout', (req, res) => {
+  //console.log('this is req for logout', req);
+  models.Sessions.delete({hash: req.session.hash})
+    .then( data => {
+      res.cookie('shortlyid', '');
+      res.redirect('/login');
+
+    })
+    .catch(err => {
+      console.error(err);
+    });
+
+});
+
 
 /************************************************************/
 // Write your authentication routes here
@@ -105,7 +129,9 @@ app.post('/signup', (req, res, next) =>{
         console.log('User created!!', user);
         models.Users.create(req.body)
           .then(data => {
-            res.redirect('/');
+            models.Sessions.update({hash: req.session.hash}, { userId: data.insertId})
+              .then(() => { res.redirect('/'); });
+
           })
           .catch(err => {
             console.error(err);
@@ -126,7 +152,11 @@ app.post('/login', (req, res, next) => {
       } else {
         if (models.Users.compare(req.body.password, user.password, user.salt)) {
           console.log('successfully logged in');
-          res.redirect('/');
+          models.Sessions.update({hash: req.session.hash}, { userId: user.id})
+            .then(() => {
+              res.redirect('/');
+            })
+            .catch(err => { console.log(err); });
         } else {
           console.log('wrong password');
           res.redirect('/login');

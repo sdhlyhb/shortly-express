@@ -21,9 +21,22 @@ module.exports.createSession = (req, res, next) => {
   if (req.cookies && req.cookies.shortlyid) {
     models.Sessions.get({hash: req.cookies.shortlyid})
       .then(session => {
-        req.session = session;
-        //console.log('*************REQ', req.session);
-        next();
+        if (session) {
+          req.session = session;
+          //console.log('*************REQ', req.session);
+          next();
+        } else {
+          sessionCreator(req, res)
+            .then((session) => {
+              //console.log('*************REQ', req.session);
+              req.session = session;
+              res.cookie('shortlyid', session.hash);
+              next();
+            })
+            .catch(err => {
+              console.error(err);
+            });
+        }
       })
       .catch(() => {
         sessionCreator(req, res)
