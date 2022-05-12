@@ -765,4 +765,5 @@ describe('', function() {
       });
     });
   });
+  //adding 3 additional tests here:
 });
