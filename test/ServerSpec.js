@@ -651,7 +651,7 @@ describe('', function() {
 
         requestWithSession(options, function(error, res, body) {
           if (error) { return done(error); }
-          console.log('this is res.body:', res.body);
+          //console.log('this is res.body:', res.body);
           expect(res.body.url).to.equal('http://www.google.com/');
           expect(res.body.code).to.not.be.null;
           done();
@@ -699,7 +699,8 @@ describe('', function() {
           url: 'http://www.google.com/',
           title: 'Google',
           baseUrl: 'http://127.0.0.1:4568',
-          code: '2387f'
+          code: '2387f',
+          userid: 1
         };
         db.query('INSERT INTO links SET ?', link, done);
       });
@@ -766,4 +767,79 @@ describe('', function() {
     });
   });
   //adding 3 additional tests here:
+  describe('Unique links', function() {
+    var cookies = request.jar();
+    var requestWithSession = request.defaults({ jar: cookies });
+
+    it('Each user has their own links', function(done) {
+      var options = {
+        'method': 'POST',
+        'followAllRedirects': true,
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'Vivian',
+          'password': 'Vivian'
+        }
+      };
+      requestWithSession(options, () => {
+        requestWithSession({
+          'method': 'POST',
+          'followAllRedirects': true,
+          'uri': 'http://127.0.0.1:4568/links',
+          'json': {
+            'url': 'http://www.google.com/'
+          }
+        }, () => {
+          requestWithSession({
+            'method': 'GET',
+            'followAllRedirects': true,
+            'uri': 'http://127.0.0.1:4568/links'
+          }, (err, res, body) => {
+            var body = JSON.parse(body);
+            var link1 = body.url;
+            var user1 = body.userid;
+            requestWithSession('http://127.0.0.1:4568/logout', () => {
+              var options = {
+                'method': 'POST',
+                'followAllRedirects': true,
+                'uri': 'http://127.0.0.1:4568/signup',
+                'json': {
+                  'username': 'Serena',
+                  'password': 'Serena'
+                }
+              };
+              requestWithSession(options, () => {
+                requestWithSession({
+                  'method': 'POST',
+                  'followAllRedirects': true,
+                  'uri': 'http://127.0.0.1:4568/links',
+                  'json': {
+                    'url': 'http://www.msn.com/'
+                  }
+                }, () => {
+                  requestWithSession({
+                    'method': 'GET',
+                    'followAllRedirects': true,
+                    'uri': 'http://127.0.0.1:4568/links'
+                  }, (err, res, body) => {
+                    var body = JSON.parse(body);
+                    var link2 = body.url;
+                    var user2 = body.userid;
+
+                    expect(link1).to.exist;
+                    expect(link2).to.exist;
+                    expect(link1).to.not.equal(link2);
+                    expect(user1).to.not.equal(user2);
+                    expect(user1).to.equal(1);
+                    expect(user2).to.equal(2);
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });

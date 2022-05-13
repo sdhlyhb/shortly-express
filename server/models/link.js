@@ -28,7 +28,7 @@ class Links extends Model {
       let match = response.body.match(tag);
       let title = match ? match[1] : url;
       return title;
-    }); 
+    });
   }
 
   /**
@@ -53,6 +53,11 @@ class Links extends Model {
 
     return super.create.call(this, link);
   }
+
+  get(options) {
+    return super.get.call(this, options);
+  }
+
 }
 
 module.exports = new Links();

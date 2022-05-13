@@ -12,7 +12,8 @@ module.exports = (db) => {
       baseUrl VARCHAR(255),
       code VARCHAR(5),
       title VARCHAR(255),
-      visits INT NOT NULL DEFAULT 0
+      visits INT NOT NULL DEFAULT 0,
+      userid INT NOT NULL DEFAULT 0
     );`)
     .then(() => {
       // Create clicks table

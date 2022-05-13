@@ -43,7 +43,7 @@ app.get('/create',
 app.get('/links',
   (req, res, next) => {
     if (Auth.verifySession(req.session)) {
-      models.Links.getAll()
+      models.Links.get({ userid: req.session.userId})
         .then(links => {
           res.status(200).send(links);
         })
@@ -57,7 +57,7 @@ app.get('/links',
 
 app.post('/links',
   (req, res, next) => {
-    console.log('this is req.session:', req.session);
+    //console.log('this is req.session:', req.session);
     var url = req.body.url;
     if (!models.Links.isValidUrl(url)) {
     // send back a 404 if link is not valid
@@ -75,7 +75,8 @@ app.post('/links',
         return models.Links.create({
           url: url,
           title: title,
-          baseUrl: req.headers.origin
+          baseUrl: req.headers.origin,
+          userid: req.session.userId
         });
       })
       .then(results => {
