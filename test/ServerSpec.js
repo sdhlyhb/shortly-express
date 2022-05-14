@@ -184,7 +184,7 @@ describe('', function() {
         if (error) { return done(error); }
         request(options, function(err, response, resBody) {
           if (err) { return done(err); }
-          expect(response.headers.location).to.equal('/signup');
+          expect(response.headers.location).to.equal('/signup?error=Username_Taken');
           done();
         });
       });
@@ -271,7 +271,7 @@ describe('', function() {
 
       request(options, function(error, res, body) {
         if (error) { return done(error); }
-        expect(res.headers.location).to.equal('/login');
+        expect(res.headers.location).to.equal('/login?error=WRONG_PASSWORD');
         done();
       });
     });
@@ -796,8 +796,8 @@ describe('', function() {
             'uri': 'http://127.0.0.1:4568/links'
           }, (err, res, body) => {
             var body = JSON.parse(body);
-            var link1 = body.url;
-            var user1 = body.userid;
+            var link1 = body[0].url;
+            var user1 = body[0].userid;
             requestWithSession('http://127.0.0.1:4568/logout', () => {
               var options = {
                 'method': 'POST',
@@ -823,8 +823,8 @@ describe('', function() {
                     'uri': 'http://127.0.0.1:4568/links'
                   }, (err, res, body) => {
                     var body = JSON.parse(body);
-                    var link2 = body.url;
-                    var user2 = body.userid;
+                    var link2 = body[0].url;
+                    var user2 = body[0].userid;
 
                     expect(link1).to.exist;
                     expect(link2).to.exist;

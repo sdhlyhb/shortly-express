@@ -6,6 +6,7 @@ const Auth = require('./middleware/auth');
 const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
 const morgan = require('morgan');
+const request = require('request');
 //let alert = require('alert'); //this won't work on the browser but only on the local computer.
 
 const app = express();
@@ -44,8 +45,9 @@ app.get('/create',
 app.get('/links',
   (req, res, next) => {
     if (Auth.verifySession(req.session)) {
-      models.Links.get({ userid: req.session.userId})
+      models.Links.getAll({ userid: req.session.userId})
         .then(links => {
+          console.log('LINKS', links);
           res.status(200).send(links);
         })
         .error(error => {
@@ -55,6 +57,7 @@ app.get('/links',
       res.redirect('/login');
     }
   });
+
 
 app.post('/links',
   (req, res, next) => {
