@@ -842,4 +842,70 @@ describe('', function() {
       });
     });
   });
+
+  describe('No duplicate users', function() {
+    it('should not add same username twice', function(done) {
+      var options1 = {
+        'method': 'POST',
+        'followAllRedirects': true,
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'Vivian',
+          'password': 'Vivian2'
+        }
+      };
+      var options2 = {
+        'method': 'POST',
+        'followAllRedirects': true,
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'Vivian',
+          'password': 'Vivian3'
+        }
+      };
+      var cookies = request.jar();
+      var requestWithSession = request.defaults({ jar: cookies });
+      requestWithSession(options1, function() {
+        requestWithSession(options2, function() {
+          db.query('SELECT * FROM users', function(err, data) {
+            if (err) { throw err; }
+            console.log(data);
+            expect(data.length).to.equal(1);
+            expect(data[0].username).to.equal('Vivian');
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe('User logout', function() {
+    it('Should keep username in database after logout', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/login',
+        'json': {
+          'username': 'Vivian',
+          'password': 'Vivian'
+        }
+      };
+      var cookies = request.jar();
+      var requestWithSession = request.defaults({ jar: cookies });
+      requestWithSession(options, function() {
+        db.query('SELECT * FROM users WHERE username="Vivian"', function(err, beforeLogout) {
+          if (err) { throw err; }
+          console.log('before Logout:', beforeLogout);
+          requestWithSession('http://127.0.0.1:4568/logout', function() {
+            db.query('SELECT * FROM users WHERE username="Vivian"', function(err, afterLogout) {
+              if (err) { throw err; }
+              console.log('after Logout:', afterLogout);
+              expect(beforeLogout.password).to.equal(afterLogout.password);
+              expect(beforeLogout.salt).to.equal(afterLogout.salt);
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 });
