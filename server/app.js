@@ -59,6 +59,10 @@ app.get('/links',
   });
 
 
+
+
+
+
 app.post('/links',
   (req, res, next) => {
     //console.log('this is req.session:', req.session);
@@ -80,6 +84,7 @@ app.post('/links',
           url: url,
           title: title,
           baseUrl: req.headers.origin,
+          iconUrl: url + '/favicon.ico' || '/redirect_icon.png',
           userid: req.session.userId
         });
       })
