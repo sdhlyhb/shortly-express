@@ -6,6 +6,7 @@ const Auth = require('./middleware/auth');
 const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
 const morgan = require('morgan');
+//let alert = require('alert'); //this won't work on the browser but only on the local computer.
 
 const app = express();
 
@@ -113,10 +114,24 @@ app.get('/logout', (req, res) => {
 // Write your authentication routes here
 /************************************************************/
 app.get('/signup', (req, res) => {
-  res.render('signup');
+  var temp = req.url.split('?');
+  if (temp[1] === 'error=Username_Taken') {
+    console.log('SIGNUP2');
+    res.render('signup2');
+  } else {
+    res.render('signup');
+  }
 });
+
 app.get('/login', (req, res) => {
-  res.render('login');
+  var temp = req.url.split('?');
+  if (temp[1] === 'error=WRONG_PASSWORD') {
+    console.log('LOGIN2');
+    res.render('login2');
+  } else {
+    res.render('login');
+  }
+
 });
 
 app.post('/signup', (req, res, next) =>{
@@ -124,10 +139,13 @@ app.post('/signup', (req, res, next) =>{
   models.Users.get({username: req.body.username})
     .then(user => {
       if (user) {
+        //alert('Username exists!!!');
         console.log('Username exists!!', user);
-        res.redirect('/signup');
+        res.redirect('/signup?error=' + encodeURIComponent('Username_Taken'));
+        //res.redirect('/signup');
       } else {
         console.log('User created!!', user);
+
         models.Users.create(req.body)
           .then(data => {
             models.Sessions.update({hash: req.session.hash}, { userId: data.insertId})
@@ -159,8 +177,9 @@ app.post('/login', (req, res, next) => {
             })
             .catch(err => { console.log(err); });
         } else {
+          res.redirect('/login?error=' + encodeURIComponent('WRONG_PASSWORD'));
           console.log('wrong password');
-          res.redirect('/login');
+          //res.redirect('/login');
         }
       }
     });
